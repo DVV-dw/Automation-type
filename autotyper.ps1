@@ -104,15 +104,21 @@ function Send-OneChar {
     }
 }
 
+$script:watch = New-Object System.Diagnostics.Stopwatch
+
 $timer.Add_Tick({
     if ($script:pos -ge $script:queue.Count) {
         $timer.Stop()
         $status.Text = "Done. F8 to type again."
         return
     }
+    $script:watch.Restart()
     Send-OneChar
+    $script:watch.Stop()
+    # Subtract SendWait + timer overhead so real pace matches the slider
+    $overhead = $script:watch.ElapsedMilliseconds + 10
     $jitter = $rand.Next(-20, 21)
-    $timer.Interval = [Math]::Max(1, $slider.Value + $jitter)
+    $timer.Interval = [Math]::Max(1, $slider.Value + $jitter - $overhead)
 })
 
 function Start-Typing {
